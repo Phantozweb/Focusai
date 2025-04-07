@@ -2,9 +2,9 @@
 const CONFIG = {
   GOOGLE_API_KEY: (() => {
     try {
-      return localStorage.getItem('GOOGLE_API_KEY') || 'AIzaSyDZqnUZS_1mPyNxwRRvc_rFCBMMFF5GVFA';
+      return localStorage.getItem('GOOGLE_API_KEY') || 'AIzaSyB6RHAgIkXqpRaOAjm8i-U4YqLyHT5BmLE';
     } catch (e) {
-      return 'AIzaSyC6ikn6HkLbGNW4V6EN5tOsejub1ja48Pg';
+      return 'AIzaSyB6RHAgIkXqpRaOAjm8i-U4YqLyHT5BmLE';
     }
   })()
 };
