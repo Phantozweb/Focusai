@@ -1,0 +1,436 @@
+{
+  "university": "Alagappa University",
+  "program": "Bachelor of Optometry",
+  "duration": "4 Years (8 Semesters)",
+  "years": [
+    {
+      "year": "Year 1",
+      "semesters": [
+        {
+          "semester": "Semester I",
+          "subjects": [
+            {
+              "code": "91413",
+              "name": "General Anatomy & Physiology",
+              "type": "Theory",
+              "units": [
+                {
+                  "unit": "I",
+                  "title": "Introduction to Human Anatomy",
+                  "topics": [
+                    {
+                      "name": "Basic Anatomical Terminology",
+                      "subtopics": [
+                        "Anatomical planes and positions",
+                        "Directional terms",
+                        "Regional terms"
+                      ]
+                    },
+                    {
+                      "name": "Cell Structure and Function",
+                      "subtopics": [
+                        "Cell membrane and organelles",
+                        "Cell division",
+                        "Tissue types"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "unit": "II",
+                  "title": "Musculoskeletal System",
+                  "topics": [
+                    {
+                      "name": "Skeletal System",
+                      "subtopics": [
+                        "Bone classification",
+                        "Joints and articulations",
+                        "Vertebral column"
+                      ]
+                    },
+                    {
+                      "name": "Muscular System",
+                      "subtopics": [
+                        "Muscle types",
+                        "Muscle contraction",
+                        "Major muscle groups"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "91414",
+              "name": "Geometrical Optics",
+              "type": "Theory",
+              "units": [
+                {
+                  "unit": "I",
+                  "title": "Reflection and Refraction",
+                  "topics": [
+                    {
+                      "name": "Laws of Reflection",
+                      "subtopics": [
+                        "Plane mirrors",
+                        "Spherical mirrors",
+                        "Image formation"
+                      ]
+                    },
+                    {
+                      "name": "Laws of Refraction",
+                      "subtopics": [
+                        "Snell's law",
+                        "Critical angle",
+                        "Total internal reflection"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "unit": "II",
+                  "title": "Prisms and Lenses",
+                  "topics": [
+                    {
+                      "name": "Optical Prisms",
+                      "subtopics": [
+                        "Deviation by prisms",
+                        "Dispersion",
+                        "Clinical applications"
+                      ]
+                    },
+                    {
+                      "name": "Spherical Lenses",
+                      "subtopics": [
+                        "Converging lenses",
+                        "Diverging lenses",
+                        "Lens power calculation"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "semester": "Semester II",
+          "subjects": [
+            {
+              "code": "91423",
+              "name": "Ocular Anatomy",
+              "type": "Theory",
+              "units": [
+                {
+                  "unit": "I",
+                  "title": "Orbit and Ocular Adnexa",
+                  "topics": [
+                    {
+                      "name": "Bony Orbit",
+                      "subtopics": [
+                        "Orbital walls",
+                        "Orbital openings",
+                        "Orbital contents"
+                      ]
+                    },
+                    {
+                      "name": "Eyelids and Lacrimal System",
+                      "subtopics": [
+                        "Eyelid layers",
+                        "Lacrimal gland",
+                        "Tear drainage system"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "unit": "II",
+                  "title": "Ocular Structures",
+                  "topics": [
+                    {
+                      "name": "Cornea and Sclera",
+                      "subtopics": [
+                        "Corneal layers",
+                        "Scleral structure",
+                        "Limbus"
+                      ]
+                    },
+                    {
+                      "name": "Uveal Tract",
+                      "subtopics": [
+                        "Iris anatomy",
+                        "Ciliary body",
+                        "Choroid"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "91424",
+              "name": "Ocular Physiology",
+              "type": "Theory",
+              "units": [
+                {
+                  "unit": "I",
+                  "title": "Anterior Segment Physiology",
+                  "topics": [
+                    {
+                      "name": "Tear Film",
+                      "subtopics": [
+                        "Layers of tear film",
+                        "Tear production",
+                        "Tear functions"
+                      ]
+                    },
+                    {
+                      "name": "Corneal Transparency",
+                      "subtopics": [
+                        "Structural basis",
+                        "Metabolic pumps",
+                        "Hydration control"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "year": "Year 2",
+      "semesters": [
+        {
+          "semester": "Semester III",
+          "subjects": [
+            {
+              "code": "91433",
+              "name": "Visual Optics",
+              "type": "Theory",
+              "units": [
+                {
+                  "unit": "I",
+                  "title": "Optics of the Eye",
+                  "topics": [
+                    {
+                      "name": "Schematic Eyes",
+                      "subtopics": [
+                        "Reduced eye model",
+                        "Gullstrand's exact eye",
+                        "Cardinal points"
+                      ]
+                    },
+                    {
+                      "name": "Accommodation",
+                      "subtopics": [
+                        "Mechanism of accommodation",
+                        "Amplitude of accommodation",
+                        "Presbyopia"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "91434",
+              "name": "Optometric Optics",
+              "type": "Theory",
+              "units": [
+                {
+                  "unit": "I",
+                  "title": "Ophthalmic Lenses",
+                  "topics": [
+                    {
+                      "name": "Lens Materials",
+                      "subtopics": [
+                        "Glass lenses",
+                        "Plastic lenses",
+                        "High-index materials"
+                      ]
+                    },
+                    {
+                      "name": "Lens Forms",
+                      "subtopics": [
+                        "Spherical lenses",
+                        "Cylindrical lenses",
+                        "Aspheric lenses"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "semester": "Semester IV",
+          "subjects": [
+            {
+              "code": "91443",
+              "name": "Optometric Instrumentation",
+              "type": "Theory",
+              "units": [
+                {
+                  "unit": "I",
+                  "title": "Refraction Instruments",
+                  "topics": [
+                    {
+                      "name": "Retinoscopy",
+                      "subtopics": [
+                        "Streak retinoscope",
+                        "Neutralization technique",
+                        "Working distance"
+                      ]
+                    },
+                    {
+                      "name": "Phoropters",
+                      "subtopics": [
+                        "Manual phoropters",
+                        "Digital phoropters",
+                        "Auxiliary lenses"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "year": "Year 3",
+      "semesters": [
+        {
+          "semester": "Semester V",
+          "subjects": [
+            {
+              "code": "91451",
+              "name": "Contact Lens - I",
+              "type": "Theory",
+              "units": [
+                {
+                  "unit": "I",
+                  "title": "Contact Lens Materials",
+                  "topics": [
+                    {
+                      "name": "Soft Lens Materials",
+                      "subtopics": [
+                        "HEMA based",
+                        "Silicone hydrogels",
+                        "Water content"
+                      ]
+                    },
+                    {
+                      "name": "RGP Materials",
+                      "subtopics": [
+                        "Silicone acrylates",
+                        "Fluoro-silicone acrylates",
+                        "Dk values"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "semester": "Semester VI",
+          "subjects": [
+            {
+              "code": "91461",
+              "name": "Contact Lens - II",
+              "type": "Theory",
+              "units": [
+                {
+                  "unit": "I",
+                  "title": "Specialty Contact Lenses",
+                  "topics": [
+                    {
+                      "name": "Toric Lenses",
+                      "subtopics": [
+                        "Stabilization methods",
+                        "Fitting assessment",
+                        "Troubleshooting"
+                      ]
+                    },
+                    {
+                      "name": "Multifocal Lenses",
+                      "subtopics": [
+                        "Simultaneous vision",
+                        "Translating designs",
+                        "Modified monovision"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "year": "Year 4",
+      "semesters": [
+        {
+          "semester": "Semester VII",
+          "subjects": [
+            {
+              "code": "91471",
+              "name": "Internship - I",
+              "type": "Clinical",
+              "units": [
+                {
+                  "unit": "I",
+                  "title": "Clinical Rotations",
+                  "topics": [
+                    {
+                      "name": "Refraction Clinic",
+                      "subtopics": [
+                        "Subjective refraction",
+                        "Cycloplegic refraction",
+                        "Prescription analysis"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "semester": "Semester VIII",
+          "subjects": [
+            {
+              "code": "91481",
+              "name": "Internship - II",
+              "type": "Clinical",
+              "units": [
+                {
+                  "unit": "I",
+                  "title": "Specialty Clinics",
+                  "topics": [
+                    {
+                      "name": "Low Vision Clinic",
+                      "subtopics": [
+                        "Visual assessment",
+                        "Device selection",
+                        "Rehabilitation"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+} 

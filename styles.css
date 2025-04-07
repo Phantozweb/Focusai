@@ -1,0 +1,18 @@
+<file-changes>
+```diff
+--- a/styles.css
++++ b/styles.css
+@@ -464,6 +464,11 @@
+   0% {
+     box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7);
+   }
++
++  .option-item:hover {
++      background: rgba(14, 165, 233, 0.1);
++      border-color: var(--primary);
++      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
+   100% {
+     box-shadow: 0 0 0 10px rgba(56, 189, 248, 0);
+   }
+
+

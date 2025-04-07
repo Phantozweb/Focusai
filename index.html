@@ -1,0 +1,2091 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus.AI - Optometry Assistant</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://www.gstatic.com/generative-ai-web/sdk.js"></script>
+  <script src="config.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.6.2/fuse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    :root {
+      --primary: #0ea5e9;
+      --secondary: #38bdf8;
+      --background: #ffffff;
+      --glass: rgba(255, 255, 255, 0.7);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(45deg, var(--background), #f0f9ff);
+      font-family: 'Segoe UI', sans-serif;
+      color: #0c4a6e;
+      position: relative;
+    }
+
+    .floating-background {
+      position: fixed;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      filter: url(#goo);
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 1rem;
+      padding-top: 1rem;
+    }
+
+    .ai-icon {
+      font-size: 3rem;
+      color: var(--primary);
+      text-shadow: 0 0 20px rgba(14, 165, 233, 0.5);
+    }
+
+    .input-container {
+      position: relative;
+      margin: 2rem auto;
+      max-width: 100%;
+    }
+
+    .ai-input {
+      width: 100%;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      border: 2px solid transparent;
+      background: rgba(12, 74, 110, 0.05);
+      color: #0c4a6e;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+    }
+
+    .ai-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 30px rgba(14, 165, 233, 0.3);
+    }
+
+    .process-btn {
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 0.75rem;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .process-btn:hover {
+      transform: translateY(-2px);
+      opacity: 0.9;
+    }
+
+    .button-container {
+      text-align: center;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    .response-container {
+      background: rgba(12, 74, 110, 0.05);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin: 2rem auto;
+      max-width: 100%;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.1s ease;
+      max-height: none;
+      overflow-y: visible;
+    }
+
+    .response-container.fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      border: 1px solid rgba(12, 74, 110, 0.15);
+      box-shadow: 0 0 50px rgba(0,0,0,0.3);
+      padding: 2rem;
+      margin: 0;
+      overflow-y: auto;
+      height: 100vh;
+    }
+
+    .typing-effect span {
+      opacity: 0;
+      animation: appear 0.01s forwards;
+    }
+
+    @keyframes appear {
+      to { opacity: 1; }
+    }
+
+    .loading {
+      display: none;
+    }
+
+    .spinner {
+      width: 3rem;
+      height: 3rem;
+      border: 4px solid rgba(255,255,255,0.1);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .floating-circle {
+      position: absolute;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      border-radius: 50%;
+      animation: float 20s infinite linear;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0,0) scale(1); }
+      25% { transform: translate(100px, 50px) scale(0.8); }
+      50% { transform: translate(-50px, 100px) scale(1.2); }
+      75% { transform: translate(-100px, -50px) scale(0.9); }
+    }
+
+    .content-wrapper {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .footer {
+      position: relative;
+      text-align: center;
+      padding: 1rem 0;
+      background: var(--glass);
+      border-top: 1px solid rgba(12, 74, 110, 0.1);
+      margin-top: auto;
+      color: #0c4a6e;
+    }
+
+    .fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 1000;
+    }
+
+    .fullscreen .typing-effect {
+      padding: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .ai-suggest-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      z-index: 2000;
+      backdrop-filter: blur(15px);
+    }
+
+    .modal-content {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(56, 189, 248, 0.15));
+      width: 90%;
+      max-width: 800px;
+      margin: 2rem auto;
+      border-radius: 1.5rem;
+      border: 1px solid rgba(12, 74, 110, 0.2);
+      box-shadow: 0 0 40px rgba(14, 165, 233, 0.3);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      position: sticky;
+      top: 0;
+      background: inherit;
+      z-index: 10;
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .suggest-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      padding: 2rem;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .modal-suggestion {
+      background: rgba(12, 74, 110, 0.05);
+      padding: 1.5rem;
+      border-radius: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(14, 165, 233, 0.3);
+    }
+
+    .modal-suggestion:hover {
+      background: rgba(14, 165, 233, 0.15);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(14, 165, 233, 0.2);
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 2rem;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .close-btn:hover {
+      transform: rotate(90deg);
+    }
+    
+    /* Add new styles for section cards */
+    .section-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      margin: 2rem auto;
+      max-width: 800px;
+    }
+
+    .section-card {
+      background: linear-gradient(145deg, rgba(14, 165, 233, 0.15), rgba(56, 189, 248, 0.1));
+      border: 1px solid rgba(12, 74, 110, 0.1);
+      border-radius: 1.2rem;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(12px);
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(12, 74, 110, 0.2);
+      box-shadow: 0 10px 30px rgba(14, 165, 233, 0.2);
+    }
+
+    .section-card h3 {
+      margin: 0;
+      color: #0c4a6e;
+      font-size: 1.5rem;
+    }
+
+    .section-card p {
+      margin: 0.5rem 0 0;
+      color: rgba(12, 74, 110, 0.7);
+      font-size: 0.9rem;
+    }
+
+    /* Add response formatting styles */
+    .formatted-response {
+      line-height: 1.6;
+      font-size: 1.1rem;
+      padding: 0;
+      max-width: 100vw;
+    }
+    
+    .formatted-response h4 {
+      color: var(--primary);
+      margin: 1.5rem 0 1rem;
+      font-size: 1.3rem;
+      border-bottom: 2px solid rgba(14, 165, 233, 0.3);
+      padding-bottom: 0.5rem;
+    }
+
+    .formatted-response ul {
+      margin: 1rem 0;
+      padding-left: 1.5rem;
+    }
+
+    .formatted-response li {
+      margin: 0.5rem 0;
+      padding-left: 1rem;
+      position: relative;
+    }
+
+    .formatted-response li::before {
+      content: '▹';
+      position: absolute;
+      left: -1rem;
+      color: var(--secondary);
+    }
+
+    .formatted-response strong {
+      color: var(--secondary);
+      font-weight: 500;
+    }
+
+    .anatomy-diagram {
+      margin: 1.5rem 0;
+      padding: 1rem;
+      background: rgba(255,255,255,0.05);
+      border-radius: 1rem;
+      text-align: center;
+    }
+
+    .clinical-tip {
+      background: linear-gradient(145deg, rgba(56, 189, 248, 0.15), transparent);
+      border-left: 4px solid var(--secondary);
+      padding: 1rem;
+      margin: 1.5rem 0;
+      border-radius: 0 0.5rem 0.5rem 0;
+    }
+    
+    .suggested-questions {
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .suggestions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 0.8rem;
+      margin-top: 1rem;
+    }
+
+    .suggestion-chip {
+      background: rgba(14, 165, 233, 0.1);
+      border: 1px solid rgba(14, 165, 233, 0.3);
+      border-radius: 0.8rem;
+      padding: 0.8rem;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+    }
+
+    .suggestion-chip i {
+      margin-right: 0.8rem;
+      color: var(--primary);
+      font-size: 0.8rem;
+    }
+
+    .pin-button {
+      position: absolute;
+      right: 1rem;
+      top: 1rem;
+      font-size: 1rem;
+      color: var(--primary);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      background: none;
+      border: none;
+    }
+
+    .pin-button.active {
+      color: var(--secondary);
+      transform: rotate(360deg);
+    }
+
+    .pins-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      z-index: 2000;
+      backdrop-filter: blur(15px);
+    }
+
+    .pins-content {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(56, 189, 248, 0.15));
+      width: 90%;
+      max-width: 800px;
+      margin: 2rem auto;
+      border-radius: 1.5rem;
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 0 40px rgba(14, 165, 233, 0.3);
+      overflow: hidden;
+    }
+
+    .pins-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .pins-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      padding: 2rem;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .pinned-item {
+      background: rgba(255,255,255,0.05);
+      padding: 1.5rem;
+      border-radius: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(14, 165, 233, 0.3);
+    }
+
+    .pinned-item:hover {
+      background: rgba(14, 165, 233, 0.15);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(14, 165, 233, 0.2);
+    }
+
+    .unpin-btn {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .unpin-btn:hover {
+      transform: rotate(90deg);
+    }
+
+    .fa-sync-alt {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .questions-grid {
+      transition: opacity 0.3s ease;
+    }
+
+    .refreshing {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    @media (max-width: 768px) {
+      .button-container {
+        width: 100%;
+      }
+      
+      .response-container.fullscreen {
+        padding: 1rem;
+      }
+
+      .modal-header h3 {
+        font-size: 1.2rem;
+      }
+      
+      .section-cards {
+        grid-template-columns: 1fr;
+      }
+      
+      .section-card {
+        aspect-ratio: auto;
+        padding: 2rem 1rem;
+      }
+      
+      .unit-card {
+        margin-bottom: 1rem;
+      }
+    }
+
+    .case-study-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      z-index: 2000;
+      backdrop-filter: blur(15px);
+      overflow-y: auto;
+    }
+
+    .case-study-content {
+      padding: 0;
+      width: 100%;
+      height: calc(100vh - 120px);
+    }
+
+    .selector-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .selector-options {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .selector-option {
+      flex: 1;
+      padding: 1rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(14, 165, 233, 0.3);
+      border-radius: 0.8rem;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .selector-option.active {
+      background: rgba(14, 165, 233, 0.2);
+      border-color: var(--primary);
+      box-shadow: 0 0 15px rgba(14, 165, 233, 0.3);
+    }
+
+    .mode-options {
+      margin: 2rem 0;
+    }
+
+    .advanced-options {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .option-group {
+      background: rgba(255,255,255,0.05);
+      padding: 1.5rem;
+      border-radius: 0.8rem;
+    }
+
+    .option-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .option-field select, .option-field textarea, .option-field input {
+      padding: 0.8rem;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(14, 165, 233, 0.3);
+      border-radius: 0.5rem;
+      color: #0c4a6e;
+      font-size: 0.9rem;
+    }
+
+    .option-field textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .custom-topic-input {
+      width: 100%;
+      padding: 0.8rem;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(14, 165, 233, 0.3);
+      border-radius: 0.5rem;
+      color: #0c4a6e;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+    
+    .unit-card {
+      background: linear-gradient(145deg, rgba(14, 165, 233, 0.2), rgba(56, 189, 248, 0.15));
+      border: 1px solid rgba(12, 74, 110, 0.2);
+      border-radius: 1.2rem;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 1rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .unit-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(14, 165, 233, 0.5);
+      box-shadow: 0 12px 25px rgba(14, 165, 233, 0.3);
+    }
+    
+    .unit-card h3 {
+      margin: 0 0 0.5rem 0;
+      color: #0c4a6e;
+      font-size: 1.3rem;
+      font-weight: bold;
+      text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+    }
+    
+    .unit-card p {
+      color: rgba(12, 74, 110, 0.9);
+      margin: 0;
+      font-size: 0.95rem;
+      text-shadow: 0 1px 2px rgba(255,255,255,0.4);
+    }
+    
+    .unit-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, rgba(14, 165, 233, 0.1), rgba(56, 189, 248, 0.05));
+      z-index: -1;
+    }
+
+    .syllabus-content {
+      padding: 1rem;
+      overflow-y: auto;
+      max-height: 80vh;
+    }
+
+    .year-section {
+      margin-bottom: 2rem;
+    }
+
+    .year-header {
+      background: linear-gradient(145deg, rgba(14, 165, 233, 0.2), rgba(56, 189, 248, 0.15));
+      padding: 1rem;
+      border-radius: 0.8rem;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #0c4a6e;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .semester-section {
+      margin: 1.5rem 0;
+    }
+
+    .semester-header {
+      background: rgba(14, 165, 233, 0.1);
+      padding: 0.8rem 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+      color: #0c4a6e;
+    }
+
+    .subject-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(14, 165, 233, 0.2);
+      border-radius: 0.8rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .subject-card:hover {
+      background: rgba(14, 165, 233, 0.1);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 15px rgba(14, 165, 233, 0.2);
+    }
+
+    .subject-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    .subject-type {
+      font-size: 0.8rem;
+      padding: 0.3rem 0.5rem;
+      background: rgba(14, 165, 233, 0.2);
+      border-radius: 0.3rem;
+      color: #0c4a6e;
+    }
+
+    .units-container {
+      display: none;
+      margin-top: 1rem;
+    }
+
+    .unit-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(14, 165, 233, 0.1);
+      border-radius: 0.5rem;
+      padding: 0.8rem;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .unit-item:hover {
+      background: rgba(14, 165, 233, 0.05);
+    }
+
+    .topics-container {
+      margin-left: 1.5rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    .topic-item {
+      padding: 0.5rem;
+      border-left: 2px solid rgba(14, 165, 233, 0.3);
+      margin-bottom: 0.3rem;
+    }
+
+    .subtopics-container {
+      margin-left: 1.5rem;
+      margin-top: 0.3rem;
+      font-size: 0.9rem;
+      color: rgba(12, 74, 110, 0.8);
+    }
+
+    .subtopic-item {
+      padding: 0.2rem 0.5rem;
+      position: relative;
+    }
+
+    .subtopic-item::before {
+      content: '•';
+      position: absolute;
+      left: -0.8rem;
+      color: var(--secondary);
+    }
+
+    .formatted-response table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      background: rgba(14, 165, 233, 0.05);
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .formatted-response th {
+      background: rgba(14, 165, 233, 0.2);
+      color: #0c4a6e;
+      font-weight: bold;
+      text-align: left;
+      padding: 0.8rem;
+      border: 1px solid rgba(14, 165, 233, 0.3);
+    }
+
+    .formatted-response td {
+      padding: 0.8rem;
+      border: 1px solid rgba(14, 165, 233, 0.2);
+      text-align: left;
+    }
+
+    .formatted-response tr:nth-child(even) {
+      background: rgba(14, 165, 233, 0.05);
+    }
+
+    .case-qa-container {
+      margin-top: 2rem;
+      border-top: 1px solid rgba(14, 165, 233, 0.3);
+      padding-top: 1rem;
+    }
+
+    .case-question {
+      background: rgba(14, 165, 233, 0.1);
+      border-left: 4px solid var(--primary);
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 0 0.5rem 0.5rem 0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .case-question:hover {
+      background: rgba(14, 165, 233, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .case-answer {
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(14, 165, 233, 0.2);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin: 0.5rem 0 1.5rem;
+      display: none;
+    }
+
+    .case-question i {
+      transition: transform 0.3s ease;
+      margin-right: 0.5rem;
+    }
+
+    .case-question.active i {
+      transform: rotate(90deg);
+    }
+
+    .formatted-response section {
+      margin-bottom: 2rem;
+    }
+
+    .formatted-response h3 {
+      color: var(--primary);
+      border-bottom: 2px solid rgba(14, 165, 233, 0.2);
+      padding-bottom: 0.5rem;
+      margin-top: 2rem;
+    }
+
+    .case-title {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #0c4a6e;
+    }
+
+    .patient-info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      background: rgba(14, 165, 233, 0.05);
+      padding: 1rem;
+      border-radius: 0.5rem;
+    }
+
+    .patient-info-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .patient-info-label {
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+
+    .patient-info-value {
+      font-weight: 500;
+      color: #0c4a6e;
+    }
+    
+    .formatted-table {
+      width: 100%;
+      margin: 0;
+      border-radius: 0;
+    }
+
+    .formatted-table th, 
+    .formatted-table td {
+      padding: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .case-study-content {
+        padding: 0;
+      }
+      
+      .formatted-table {
+        font-size: 0.8rem;
+      }
+    }
+
+    .question-container {
+      padding: 1.5rem;
+      border-radius: 1rem;
+      margin-top: 2rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(14, 165, 233, 0.3);
+      box-shadow: 0 4px 10px rgba(14, 165, 233, 0.1);
+    }
+
+    .question-card {
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      border-radius: 0.8rem;
+      background: rgba(14, 165, 233, 0.05);
+      border: 1px solid rgba(14, 165, 233, 0.2);
+    }
+  
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid rgba(14, 165, 233, 0.2);
+    }
+
+    .question-progress {
+      font-size: 0.9rem;
+      color: #0c4a6e;
+    }
+  
+    .score-tracker {
+      font-size: 0.9rem;
+      color: #0c4a6e;
+    }
+
+    .question-text {
+      font-size: 1.1rem;
+      color: #0c4a6e;
+      margin-bottom: 1.5rem;
+      padding: 0.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 0.5rem;
+    }
+
+    .option-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+  
+    .option-item {
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      border-radius: 0.8rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(14, 165, 233, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .option-item:hover {
+      background: rgba(14, 165, 233, 0.1);
+      border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
+    }
+  
+    .option-item input[type="radio"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+  
+    .option-content {
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+  
+    .option-letter {
+      min-width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      background: rgba(14, 165, 233, 0.15);
+      color: var(--primary);
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 1rem;
+    }
+  
+    .option-text {
+      flex: 1;
+      font-size: 1rem;
+      color: #0c4a6e;
+    }
+
+    .option-item.selected {
+      background: rgba(14, 165, 233, 0.2);
+      border-color: var(--primary);
+    }
+
+    .option-item.correct {
+      background: rgba(76, 175, 80, 0.1);
+      border-color: #4CAF50;
+    }
+
+    .option-item.incorrect {
+      background: rgba(244, 67, 54, 0.1);
+      border-color: #f44336;
+    }
+  
+    .check-indicator {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 2rem;
+      height: 2rem;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.8);
+      font-size: 1.2rem;
+      border-radius: 0 0.8rem 0 0;
+    }
+  
+    .explanation-card {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(14, 165, 233, 0.2);
+      font-size: 0.9rem;
+    }
+  
+    .explanation-content h4 {
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+  
+    .explanation-content p {
+      color: #0c4a6e;
+      margin-bottom: 1rem;
+    }
+
+    .answer-status {
+      font-weight: bold;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+    }
+
+    .answer-status.correct {
+      background: rgba(76, 175, 80, 0.2);
+      color: #4CAF50;
+    }
+
+    .answer-status.incorrect {
+      background: rgba(244, 67, 54, 0.2);
+      color: #f44336;
+    }
+
+    .results-card {
+      background: rgba(14, 165, 233, 0.05);
+      border: 1px solid rgba(14, 165, 233, 0.2);
+      padding: 2rem;
+      border-radius: 1rem;
+      margin-top: 2rem;
+    }
+
+    .results-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .final-score {
+      font-size: 3rem;
+      color: var(--primary);
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .score-progress {
+      height: 1rem;
+      background: rgba(14, 165, 233, 0.1);
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      border-radius: 0.5rem;
+      transition: width 0.5s ease;
+    }
+
+    .results-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .result-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.8rem;
+      border-radius: 0.5rem;
+      font-size: 0.9rem;
+    }
+  
+    .result-item.correct {
+      background: rgba(76, 175, 80, 0.1);
+      color: #4CAF50;
+    }
+  
+    .result-item.incorrect {
+      background: rgba(244, 67, 54, 0.1);
+      color: #f44336;
+    }
+
+    .question-number {
+      font-weight: bold;
+      color: #0c4a6e;
+    }
+
+    .question-status {
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="content-wrapper">
+    <svg style="visibility: hidden; position: absolute;" width="0" height="0">
+      <filter id="goo">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
+        <feBlend in="SourceGraphic" in2="goo" />
+      </filter>
+    </svg>
+
+    <div class="floating-background"></div>
+
+    <div class="ai-suggest-modal" id="suggestModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Alagappa University Optometry</h3>
+          <button class="close-btn" onclick="closeSuggestModal()">&times;</button>
+        </div>
+        <div class="suggest-grid" id="modalSuggestions"></div>
+      </div>
+    </div>
+
+    <div class="pins-modal" id="pinsModal">
+      <div class="pins-content">
+        <div class="pins-header">
+          <h3>Saved Answers <i class="fas fa-bookmark"></i></h3>
+          <button class="close-btn" onclick="closePinsModal()">&times;</button>
+        </div>
+        <div class="pins-grid" id="pinsContainer"></div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="header">
+        <div class="ai-icon">
+          <i class="fas fa-eye"></i>
+        </div>
+        <h1>Focus<span style="color: var(--secondary)">.AI</span></h1>
+        <p>Your Expert Optometry Assistant</p>
+        <div style="display: inline-block;
+                    padding: 0.3rem 0.6rem;
+                    background-color: #38bdf8;
+                    color: white;
+                    border-radius: 0.5rem;
+                    font-size: 0.8rem;
+                    animation: pulse 2s infinite alternate;
+                    margin-top: 0.3rem;">
+          Made for LIHSM Pupils
+        </div>
+      </div>
+
+      <div class="section-cards">
+        <div class="section-card" onclick="showChatInterface()">
+          <i class="fas fa-comments"></i>
+          <h3>Ask Focus Ai</h3>
+          <p>Interactive consultation</p>
+        </div>
+        <div class="section-card" onclick="showCaseStudyModal()">
+          <i class="fas fa-eye"></i>
+          <h3>Case Study</h3>
+          <p>Clinical scenario generator</p>
+        </div>
+        <div class="section-card" onclick="showPracticeQuizModal()">
+          <i class="fas fa-question-circle"></i>
+          <h3>Quiz</h3>
+          <p>Test your knowledge</p>
+        </div>
+        <div class="section-card" onclick="showPinsSection()">
+          <i class="fas fa-bookmark"></i>
+          <h3>Saved</h3>
+          <p>Saved questions & answers</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-modal" id="chatModal" style="display:none;">
+      <div class="modal-content chat-content">
+        <div class="modal-header">
+          <h3>Ask Focus Ai <i class="fas fa-comments"></i></h3>
+          <button class="close-btn" onclick="closeChatModal()">&times;</button>
+        </div>
+        <div class="input-container">
+          <textarea 
+            class="ai-input" 
+            rows="5" 
+            placeholder="Ask your optometry question here..."
+          ></textarea>
+        </div>
+
+        <div class="button-container">
+          <button class="process-btn" onclick="processInput()">
+            Get Expert Answer
+          </button>
+        </div>
+
+        <div class="loading" id="loadingIndicator" style="display: none;">
+          <div class="spinner" style="width:1.5rem;height:1.5rem;margin:0;"></div>
+          <p>Generating expert response...</p>
+        </div>
+
+        <div class="response-container" id="response">
+          <button class="pin-button" id="pinButton" onclick="togglePin()" style="display: none;">
+            <i class="fas fa-bookmark"></i> SAVE
+          </button>
+          <button class="magic-wand" id="magicWand" onclick="toggleMagicOptions()" style="display: none;">
+            <i class="fas fa-magic"></i>
+          </button>
+          <div class="magic-options" id="magicOptions">
+            <button class="magic-option" onclick="transformText('simplify')">
+              <i class="fas fa-child"></i> Simplify
+            </button>
+            <button class="magic-option" onclick="transformText('explain')">
+              <i class="fas fa-chalkboard-teacher"></i> Explain in Detail
+            </button>
+            <button class="magic-option" onclick="transformText('clinical')">
+              <i class="fas fa-user-md"></i> Clinical Focus
+            </button>
+            <button class="magic-option" onclick="transformText('student')">
+              <i class="fas fa-graduation-cap"></i> Student Friendly
+            </button>
+          </div>
+          <div class="typing-effect" id="response-content"></div>
+          <div id="suggested-questions" class="suggested-questions"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="case-study-modal" id="caseStudyModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Case Study Generator <i class="fas fa-briefcase-medical"></i></h3>
+          <button class="close-btn" onclick="closeCaseStudyModal()">&times;</button>
+        </div>
+        <div class="case-study-content" style="padding: 0; width: 100%; height: calc(100vh - 120px); overflow-y: auto;">
+          <div class="selector-group">
+            <h4>Enter topic to generate</h4>
+            <input type="text" id="caseTopic" class="custom-topic-input" 
+                   placeholder="E.g., Keratoconus, Diabetic Retinopathy, Myopia Management...">
+          </div>
+          
+          <div style="text-align: center; margin-top: 2rem;">
+            <button class="process-btn" onclick="generateCaseStudy()">
+              <i class="fas fa-file-medical"></i> Generate Case Study
+            </button>
+          </div>
+          
+          <div id="caseStudyResult" class="case-study-result"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="case-study-modal" id="practiceQuizModal" style="display:none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Quiz Generator <i class="fas fa-question-circle"></i></h3>
+          <button class="close-btn" onclick="closePracticeQuizModal()">&times;</button>
+        </div>
+        <div class="case-study-content">  
+          <div class="selector-group">
+            <h4>Enter topic to practice</h4>
+            <input type="text" id="quizTopic" class="custom-topic-input" 
+                   placeholder="E.g., Glaucoma, Contact Lenses, Binocular Vision...">
+          </div>
+          
+          <div class="selector-group">
+            <h4>Number of Questions</h4>
+            <input type="number" id="questionCount" min="1" max="30" value="10" 
+                   class="custom-topic-input" style="max-width: 200px;">
+          </div>
+          
+          <div style="text-align: center; margin-top: 2rem;">
+            <button class="process-btn" onclick="startPracticeSession()">
+              <i class="fas fa-play"></i> Generate Questions
+            </button>
+          </div>
+          
+          <div id="questionContainer" class="question-container"></div>
+          <div id="practiceResults" class="practice-results"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div style="
+              display: inline-block;
+              padding: 0.3rem 0.6rem;
+              background-color: #38bdf8;
+              color: white;
+              border-radius: 0.5rem;
+              font-size: 0.8rem;
+              margin-bottom: 0.3rem;
+            ">
+           Note: The information provided may not be entirely relevant or accurate. Always cross-check with textbooks and reliable sources. <a href="https://lens-lights.square.site/focus-ai" style="color:white;text-decoration:none">Lens & Lights</a>
+        </div>
+      Powered by Lens & Lights
+    </div>
+
+    <script>
+      const MODEL_NAME = 'gemini-1.5-pro-latest';
+      const SAFETY_SETTINGS = [
+        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+      ];
+      const INSTRUCTIONS = {
+        systemPrompt: `You are Focus.AI - Clinical Optometry Specialist. Format responses with:
+• Clear headings using ## 
+• Bullet points for lists
+• Bold terms with **asterisks**
+• Numbered steps where applicable
+• Section separators with ---
+Strictly include ONLY eye-related medical information.`
+      };
+
+      let savedPins = JSON.parse(localStorage.getItem('pins')) || [];
+      let currentQuestion = '';
+      let currentAnswer = '';
+
+      function closeSuggestModal() {
+        document.getElementById('suggestModal').style.display = 'none';
+      }
+
+      function closePinsModal() {
+        document.getElementById('pinsModal').style.display = 'none';
+      }
+
+      function savePin(question, answer) {
+        if(savedPins.some(pin => 
+          pin.question === question && pin.answer === answer
+        )) return;
+        
+        savedPins.push({
+          question,
+          answer,
+          timestamp: new Date().toISOString(),
+          truncated: answer.substring(0, 200) + '...'
+        });
+        
+        localStorage.setItem('pins', JSON.stringify(savedPins));
+      }
+
+      async function processInput() {
+        const input = document.querySelector('.ai-input').value.trim();
+        if (!input) return;
+        
+        currentQuestion = input; // Store current question
+        
+        let aiResponse;  
+        const btn = document.querySelector('.process-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner" style="width:1.5rem;height:1.5rem;margin:0;"></div>';
+        
+        // Show loading indicator
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        loadingIndicator.style.display = 'flex';
+        loadingIndicator.style.flexDirection = 'column';
+        loadingIndicator.style.alignItems = 'center';
+        
+        // Clear previous response immediately
+        document.getElementById('response').style.opacity = '0';
+        document.getElementById('response-content').innerHTML = '';
+        document.getElementById('suggested-questions').innerHTML = '';
+
+        try {
+          // Attempt to fetch local Q&A data first
+          let qnaData = await fetch('./database.json').then(r => r.json()).catch(() => []);
+          
+          // Improved local search with exact match check
+          const exactMatch = qnaData.find(item => 
+            item.prompt.toLowerCase() === input.toLowerCase()
+          );
+
+          if(exactMatch) {
+            // Force API override for consistent UI behavior
+            throw new Error('Override local match'); 
+          }
+
+          // API verification with error handling
+          const isEyeRelated = await verifyEyeRelated(input);
+          if(!isEyeRelated) {
+            typeFormattedResponse("## Focus on Ophthalmic Topics Only\n\nI specialize in eye health and optometry topics only.\n\nPlease ask about:\n* Eye anatomy/physiology\n* Vision disorders\n* Clinical procedures\n* Ocular diseases\n* Optical instruments");
+            return;  
+          }
+          
+          // Generate API response with error handling
+          aiResponse = await generateAIResponse(input);
+        
+        } catch (error) {
+          console.error('Processing Error:', error);
+          aiResponse = (exactMatch?.response) 
+            ? exactMatch.response 
+            : "Enhanced Local Knowledge Response\n\n" + 
+              getFallbackResponse(input, qnaData);
+        } finally {
+          if(aiResponse) {  
+            currentAnswer = aiResponse; // Store current answer
+            typeFormattedResponse(aiResponse);
+            // Clear input after successful processing
+            document.querySelector('.ai-input').value = '';  
+          }
+          btn.disabled = false;
+          btn.innerHTML = 'Get Expert Answer';
+          // Hide loading indicator
+          loadingIndicator.style.display = 'none';
+          document.getElementById('pinButton').style.display = 'block';
+          updatePinButtonState();
+        }
+      }
+
+      async function verifyEyeRelated(query) {
+        if(!CONFIG.GOOGLE_API_KEY || CONFIG.GOOGLE_API_KEY === 'YOUR_API_KEY_HERE') {
+          return true; 
+        }
+
+        try {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${CONFIG.GOOGLE_API_KEY}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: `Is this query strictly about eyes/vision? Answer ONLY yes/no: "${query}"`
+                }]
+              }]
+            })
+          });
+
+          const data = await response.json();
+          return data.candidates?.[0]?.content?.parts?.[0]?.text?.toLowerCase().startsWith('yes') ?? true;
+        } catch (error) {
+          console.error('Verification Error:', error);
+          return true;  
+        }
+      }
+
+      async function generateAIResponse(query) {
+        if(!CONFIG.GOOGLE_API_KEY || CONFIG.GOOGLE_API_KEY === 'YOUR_API_KEY_HERE') {
+          return "API Configuration Required\n\n1. Obtain Google AI API key\n2. Update config.js\n3. Refresh to enable AI features";
+        }
+
+        try {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${CONFIG.GOOGLE_API_KEY}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              contents: [{ 
+                parts: [{ 
+                  text: `${INSTRUCTIONS.systemPrompt}\n\nQuery: ${query}\n\nRespond in MARKDOWN ONLY. NO JSON FORMATS. Use precise medical terminology.` 
+                }] 
+              }],
+              generationConfig: {
+                maxOutputTokens: 4096
+              }
+            })
+          });
+
+          const data = await response.json();
+          return data.candidates[0].content.parts[0].text;
+        } catch (error) {
+          console.error('API Error:', error);
+          return "Service Interruption Detected\n\n* Switching to local knowledge base\n* Contact developer if issue persists";
+        }
+      }
+
+      async function typeFormattedResponse(text) {
+        const container = document.getElementById('response-content');
+        const responseContainer = document.getElementById('response');
+        
+        responseContainer.style.opacity = '0';
+        responseContainer.style.transform = 'translateY(20px)';
+        container.innerHTML = '';
+        
+        // Directly process text as markdown without JSON parsing
+        container.innerHTML = marked.parse(text);
+
+        const copyBtn = document.createElement('button');
+        copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+        copyBtn.className = 'process-btn';
+        copyBtn.style.marginTop = '1rem';
+        copyBtn.onclick = () => {
+          navigator.clipboard.writeText(text).then(() => {
+            alert('Text copied to clipboard');
+          });
+        };
+        container.appendChild(copyBtn);
+        
+        responseContainer.style.opacity = '1';
+        responseContainer.style.transform = 'translateY(0)';
+        
+        if (!text.includes("Focus on Ophthalmic Topics Only")) {
+          showSuggestedQuestions(text);
+          document.getElementById('magicWand').style.display = 'block';
+        } else {
+          document.getElementById('suggested-questions').innerHTML = '';
+          document.getElementById('magicWand').style.display = 'none';
+        }
+        updatePinButtonState();
+      }
+
+      function insertSuggestion(question) {
+        document.querySelector('.ai-input').value = question;
+        closeSuggestModal();
+        processInput();
+      }
+
+      function getFallbackResponse(input, qnaData) {
+        const relatedQuestions = qnaData
+          .filter(item => item.prompt.toLowerCase().includes(input.toLowerCase().substring(0,20)))
+          .slice(0,5)
+          .map(q => q.prompt);
+
+        return relatedQuestions.length > 0 
+          ? `I found these related topics:\n\n${relatedQuestions.map(r => `- ${r}`).join('\n')}\n\nAsk about any of these for detailed answers.`
+          : "Please ask specific optometry questions about:\n- Eye anatomy\n- Vision disorders\n- Clinical procedures\n- Ocular diseases\n\nIf this was an optometry question that didn't receive a proper answer, please contact: [Janarthan V](https://www.linkedin.com/in/janarthan-v-293272316)";
+      }
+
+      async function showSuggestedQuestions(answer) {
+        try {
+          const suggestPrompt = `Based on this optometry answer: "${answer.substring(0, 500)}...", 
+          generate 4-6 follow-up questions that a student might ask next. Return ONLY the questions, each on a new line.`;
+          
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${CONFIG.GOOGLE_API_KEY}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: suggestPrompt }] }],
+              generationConfig: { maxOutputTokens: 1024 }
+            })
+          });
+
+          const data = await response.json();
+          const suggestionText = data.candidates[0].content.parts[0].text;
+          const questions = suggestionText.split('\n').filter(q => q.trim().length > 0);
+          
+          const questionsContainer = document.getElementById('suggested-questions');
+          questionsContainer.innerHTML = `
+            <h4 style="margin-bottom: 1rem;">Suggested Follow-up Questions</h4>
+            <div class="suggestions-grid">
+              ${questions.map(q => `<div class="suggestion-chip" onclick="insertSuggestion('${q.replace(/'/g, "\\'")}')"><i class="fas fa-lightbulb"></i>${q}</div>`).join('')}
+            </div>
+          `;
+          questionsContainer.style.marginTop = '2rem';
+        } catch (error) {
+          console.error('Failed to generate suggestions:', error);
+          document.getElementById('suggested-questions').innerHTML = '';
+        }
+      }
+
+      function togglePin() {
+        if (!currentQuestion || !currentAnswer) return;
+        
+        const isPinned = savedPins.some(pin => 
+          pin.question === currentQuestion && pin.answer === currentAnswer
+        );
+
+        if(isPinned) {
+          deletePin(currentQuestion);
+        } else {
+          savePin(currentQuestion, currentAnswer);
+        }
+        
+        updatePinButtonState();
+      }
+
+      function updatePinButtonState() {
+        const isPinned = savedPins.some(pin => 
+          pin.question === currentQuestion && pin.answer === currentAnswer
+        );
+        document.getElementById('pinButton').classList.toggle('active', isPinned);
+      }
+
+      function toggleMagicOptions() {
+        document.getElementById('magicOptions').classList.toggle('active');
+      }
+
+      async function transformText(mode) {
+        const text = currentAnswer;
+        if (!text) return;
+        
+        const prompt = `Transform this optometry text to be more ${mode}:\n\n${text}`;
+
+        try {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${CONFIG.GOOGLE_API_KEY}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { maxOutputTokens: 4096 }
+            })
+          });
+
+          const data = await response.json();
+          const newText = data.candidates[0].content.parts[0].text || `Failed to ${mode} the text.`;
+          typeFormattedResponse(newText);
+        } catch (error) {
+          console.error('Transformation Error:', error);
+          typeFormattedResponse(`Failed to ${mode} the text due to API error.`);
+        } finally {
+          document.getElementById('magicOptions').classList.remove('active');
+        }
+      }
+
+      function showPinsSection() {
+        const modal = document.getElementById('pinsModal');
+        const container = document.getElementById('pinsContainer');
+        modal.style.display = 'block';
+        
+        const pins = savedPins;
+        container.innerHTML = pins.length > 0 
+          ? pins.map(pin => `
+              <div class="pinned-item">
+                <button class="unpin-btn" onclick="deletePin('${pin.question.replace(/'/g, "\\'")}')">
+                  <i class="fas fa-times"></i>
+                </button>
+                <div class="pinned-question">${pin.question}</div>
+                <div class="pinned-answer">${pin.truncated}</div>
+                <button class="process-btn" style="margin-top: 0.5rem; padding: 0.5rem 1rem;" 
+                  onclick="loadPin('${pin.question.replace(/'/g, "\\'")}')">
+                  View Full Answer
+                </button>
+              </div>
+            `).join('')
+          : `<div style="text-align:center;color:rgba(255,255,255,0.5);">No saved answers yet. Save answers using the bookmark icon!
+             </div>`;
+      }
+
+      function loadPin(question) {
+        const pin = savedPins.find(p => p.question === question);
+        if(pin) {
+          currentQuestion = pin.question;
+          currentAnswer = pin.answer;
+          
+          // Create a dedicated view for the saved item instead of loading into chat
+          closePinsModal();
+          showSavedItemView(pin);
+        }
+      }
+      
+      function showSavedItemView(pin) {
+        // Create modal for viewing individual saved items
+        const viewModal = document.createElement('div');
+        viewModal.className = 'pins-modal';
+        viewModal.style.display = 'block';
+        viewModal.id = 'savedItemView';
+        
+        viewModal.innerHTML = `
+          <div class="pins-content" style="max-width: 800px;">
+            <div class="pins-header">
+              <h3>Saved Answer <i class="fas fa-bookmark"></i></h3>
+              <button class="close-btn" onclick="closeSavedItemView()">&times;</button>
+            </div>
+            <div style="padding: 2rem; max-height: 70vh; overflow-y: auto;">
+              <h2 style="margin-bottom: 1rem;">${pin.question}</h2>
+              <div class="formatted-response">
+                <pre>${pin.answer}</pre>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-top: 2rem;">
+                <button class="process-btn" onclick="loadIntoChat('${pin.question.replace(/'/g, "\\'")}')">
+                  <i class="fas fa-comment"></i> Open in Chat
+                </button>
+                <button class="process-btn" style="background: linear-gradient(45deg, #ff6b6b, #ee5253);" onclick="deleteAndCloseSavedItem('${pin.question.replace(/'/g, "\\'")}')">
+                  <i class="fas fa-trash"></i> Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(viewModal);
+      }
+      
+      function closeSavedItemView() {
+        const viewModal = document.getElementById('savedItemView');
+        if (viewModal) {
+          document.body.removeChild(viewModal);
+        }
+      }
+      
+      function loadIntoChat(question) {
+        closeSavedItemView();
+        document.querySelector('.ai-input').value = question;
+        showChatInterface();
+        processInput();
+      }
+      
+      function deleteAndCloseSavedItem(question) {
+        deletePin(question);
+        closeSavedItemView();
+        showPinsSection(); // Refresh the pins display
+      }
+
+      // Quiz state variables
+      let quizQuestions = [];
+      let currentQuestionIndex = 0;
+      let correctAnswers = 0;
+      let userAnswers = [];
+
+      async function startPracticeSession() {
+        const topic = document.getElementById('quizTopic').value.trim();
+        const questionCount = parseInt(document.getElementById('questionCount').value) || 10;
+        
+        if (!topic) {
+          alert('Please enter a topic');
+          return;
+        }
+
+        document.getElementById('questionContainer').innerHTML = `
+          <div class="loading-squiz">
+            <div class="spinner"></div>
+            <p style="margin-top:1rem;color:#0c4a6e;font-weight:500;">Generating ${questionCount} practice questions about ${topic}...</p>
+          </div>
+        `;
+
+        // Disable button during generation
+        const genBtn = document.querySelector('#practiceQuizModal .process-btn');
+        genBtn.innerHTML = `<div class="spinner" style="width:1.5rem;height:1.5rem;margin:0 auto;"></div> Generating...`;
+        genBtn.disabled = true;
+
+        try {
+          quizQuestions = await generateMCQQuestions(topic, questionCount);
+          currentQuestionIndex = 0;
+          correctAnswers = 0;
+          userAnswers = []; 
+          userAnswers = [];
+          document.getElementById('practiceResults').innerHTML = ``;
+          document.getElementById('questionContainer').style.display = 'block';
+          showQuestion(currentQuestionIndex);
+        } catch (error) {
+          console.error('Failed to generate questions:', error);
+          document.getElementById('questionContainer').style.display = 'none';
+          showErrorState();
+        } finally {
+          // Re-enable button
+          genBtn.innerHTML = '<i class="fas fa-play"></i> Generate Questions';
+          genBtn.disabled = false;
+        }
+      }
+
+      async function generateMCQQuestions(topic, count) {
+        const prompt = `Generate ${count} multiple-choice optometry questions about ${topic} as JSON array:
+[{
+  "question": "...",
+  "options": ["...","...","...","..."],
+  "correct": 0-3,
+  "explanation": "..."
+}]`;
+
+        try {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${CONFIG.GOOGLE_API_KEY}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { responseMimeType: "application/json" }
+            })
+          });
+
+          const data = await response.json();
+          return JSON.parse(data.candidates[0].content.parts[0].text);
+          
+        } catch (error) {
+          console.error('API Error:', error);
+          return generateFallbackQuestions();
+        }
+      }
+
+      function showQuestion(index) {
+        if (index >= quizQuestions.length) {
+            showResults();
+            return;
+        }
+
+        const q = quizQuestions[index];
+        document.getElementById('questionContainer').innerHTML = `
+          <div class="question-card">
+            <div class="question-header">
+              <div class="question-progress">Question ${index + 1} of ${quizQuestions.length}</div>
+              <div class="score-tracker">Score: ${correctAnswers}/${quizQuestions.length}</div>
+            </div>
+            <div class="question-text">${q.question}</div>
+            <div class="option-grid">
+              ${q.options.map((opt, i) => `
+                <label class="option-item">
+                  <input type="radio" name="question-${index}" value="${i}"
+                          ${userAnswers[index]?.selected === i ? 'checked' : ''}>
+                  <div class="option-content">
+                    <span class="option-letter">${String.fromCharCode(65 + i)}</span>
+                    <span class="option-text">${opt}</span>
+                    <span class="check-indicator"></span>
+                  </div>
+                </label>
+              `).join('')}
+            </div>
+            <div class="explanation-card" id="explanation-${index}" style="display: none;">
+              <div class="explanation-content">
+                <h4>Explanation</h4>
+                <p>${q.explanation}</p>
+                <div class="answer-status" id="status-${index}"></div>
+              </div>
+            </div>
+            <button class="process-btn" id="submitButton" onclick="submitAnswer()" >Submit Answer</button>
+            <button class="process-btn" id="nextButton" onclick="nextQuestion()" style="display:none;">
+            Next
+            </button>
+         </div>
+        `;
+      }
+
+      function submitAnswer() {
+          const index = currentQuestionIndex;
+          const q = quizQuestions[index];
+          const selectedIndex = document.querySelector(`input[name="question-${index}"]:checked`)?.value;
+          const isCorrect = parseInt(selectedIndex) === q.correct;
+
+          // If no option selected, alert and return
+          if (selectedIndex === null) {
+              alert('Please select an answer.');
+              return;
+           }
+
+          // Store answer
+          userAnswers[index] = {
+              question: q,
+              selected: parseInt(selectedIndex), // Store as integer
+              correct: isCorrect
+          };
+
+          // Update button styling
+          const options = document.querySelectorAll('.option-item');
+          options.forEach((opt, i) => {
+              opt.classList.remove('correct', 'incorrect', 'selected');
+              if (i == selectedIndex) {
+                  opt.classList.add('selected');
+                  if (isCorrect) {
+                      opt.classList.add('correct');
+                  } else {
+                      opt.classList.add('incorrect');
+                  }
+              } else if (i == q.correct) {
+                  opt.classList.add('correct');
+              }
+          });
+
+          // Display explanation
+          const explanationCard = document.getElementById(`explanation-${index}`);
+          explanationCard.style.display = 'block';
+
+          // Update score and status
+          document.getElementById(`status-${index}`).innerHTML = isCorrect ? `<i class="fas fa-check-circle"></i> Correct!` : `<i class="fas fa-times-circle"></i> Incorrect.`;
+
+          // Hide Submit button, show Next button
+          document.getElementById('submitButton').style.display = 'none';
+          document.getElementById('nextButton').style.display = 'inline-block';
+      }
+
+      function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex >= quizQuestions.length) {
+            showResults();
+        } else {
+            showQuestion(currentQuestionIndex);
+            document.getElementById('submitButton').style.display = 'inline-block';
+            document.getElementById('nextButton').style.display = 'none';
+            if(document.getElementById(`explanation-${currentQuestionIndex-1}`)){
+              document.getElementById(`explanation-${currentQuestionIndex-1}`).style.display = 'none';
+            }
+        }
+      }
+
+      function showResults() {
+        correctAnswers = userAnswers.filter(a => a.correct).length;
+        document.getElementById('questionContainer').style.display = 'none';
+        document.getElementById('practiceResults').innerHTML = `
+          <div class="results-card">
+            <div class="results-header">
+              <div class="final-score">${correctAnswers}/${quizQuestions.length}</div>
+              <div class="score-progress">
+                <div class="progress-bar" style="width: ${(correctAnswers/quizQuestions.length)*100}%"></div>
+              </div>
+            </div>
+            <div class="results-details">
+              ${userAnswers.map((a,i) => `
+                <div class="result-item ${a.correct ? 'correct' : 'incorrect'}">
+                  <div class="question-number">Q${i+1}</div>
+                  <div class="question-status">
+                    <i class="fas fa-${a.correct ? 'check' : 'times'}"></i>
+                    ${a.correct ? 'Correct' : 'Incorrect'} 
+                  </div>
+                  ${!a.correct ? `
+                    <div class="correct-answer">
+                      Correct: ${String.fromCharCode(65 + a.question.correct)}
+                    </div>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      function showErrorState() {
+        document.getElementById('questionContainer').innerHTML = `
+          <div class="error-message">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Failed to generate questions.</p>
+          </div>
+        `;
+      }
+
+      function generateFallbackQuestions() {
+        // Implement fallback logic here
+        return [];
+      }
+
+      function showPracticeQuizModal() {
+        document.getElementById('practiceQuizModal').style.display = 'block';
+      }
+
+      function closePracticeQuizModal() {
+        document.getElementById('practiceQuizModal').style.display = 'none';
+      }
+
+      async function generateCaseStudy() {
+        const topic = document.getElementById('caseTopic').value.trim();
+        if (!topic) {
+          alert('Please enter a topic');
+          return;
+        }
+
+        document.getElementById('caseStudyResult').innerHTML = `
+          <div class="spinner" style="margin:2rem auto;"></div>
+          <p style="text-align:center;color:#0c4a6e;font-weight:500;">Generating case study about ${topic}...</p>
+        `;
+
+        const prompt = `Generate comprehensive Indian optometry case study about ${topic} using Markdown formatting with:
+1. Patient demographics table, generating a Tamil name randomly in English with initials (e.g., "S. Kumar", "V. Devi"). Match gender and age to case study data like real life data.
+2. Ocular examination tables (VA formatted as "6/x", refraction, biomicroscopy)
+3. Diagnosis and management plan
+4. Case study questions
+Use ONLY Markdown formatting with ## headings and tables.`;
+
+        try {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${CONFIG.GOOGLE_API_KEY}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { maxOutputTokens: 4096 }
+            })
+          });
+
+          const data = await response.json();
+          
+          // Add check to ensure data.candidates exists and is not empty
+          if (data && data.candidates && data.candidates.length > 0 && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts.length > 0) {
+            const rawText = data.candidates[0].content.parts[0].text;
+            const formatted = marked.parse(rawText);
+            const resultContainer = document.getElementById('caseStudyResult');
+            resultContainer.innerHTML = `
+              <div class="formatted-response clinical-case">
+                ${formatted}
+                <div style="text-align: center; margin-top: 2rem;">
+                  <button class="process-btn" onclick="exportCaseStudyToPDF()">
+                    <i class="fas fa-file-pdf"></i> Export to PDF
+                  </button>
+                </div>
+              </div>`;
+          } else {
+            // Provide a user-friendly error message
+            const resultContainer = document.getElementById('caseStudyResult');
+            resultContainer.innerHTML = `Failed to generate case study. Please try again. (API returned incomplete data)`;
+          }
+
+        } catch (error) {
+          console.error('Case Study Error:', error);
+          const resultContainer = document.getElementById('caseStudyResult');
+          resultContainer.innerHTML = `Error generating case study: ${error.message}. Please check your API key and network connection.`;
+        }
+      }
+
+      function toggleCaseAnswer(index) {
+        const answer = document.getElementById(`answer-${index}`);
+        const question = answer.previousElementSibling;
+        
+        answer.style.display = answer.style.display === 'block' ? 'none' : 'block';
+        question.classList.toggle('active');
+      }
+
+      function exportCaseStudyToPDF() {
+        const element = document.querySelector('.formatted-response');
+        
+        // Hide the questions section for export if preferred
+        const qaContainer = document.querySelector('.case-qa-container');
+        const qaDisplayState = qaContainer ? qaContainer.style.display : null;
+        if (qaContainer) qaContainer.style.display = 'none';
+        
+        // Configure PDF options
+        const opt = {
+          margin: 10,
+          filename: 'case_study.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        
+        // Generate PDF
+        html2pdf().from(element).set(opt).save().then(() => {
+          // Restore questions display after export
+          if (qaContainer) qaContainer.style.display = qaDisplayState;
+        });
+      }
+
+      function showChatInterface() {
+        document.getElementById('chatModal').style.display = 'block';
+      }
+  
+      function closeChatModal() {
+        document.getElementById('chatModal').style.display = 'none';
+      }
+  
+      function showCaseStudyModal() {
+        document.getElementById('caseStudyModal').style.display = 'block';
+      }
+  
+      function closeCaseStudyModal() {
+        document.getElementById('caseStudyModal').style.display = 'none';
+      }
+    </script>
+  </div>
+</body>
+</html>
